@@ -1,8 +1,8 @@
 # Creator delivery that respects hard bounces
 
-This small Node service follows one media asset from ingestion (`assetId`) through a processing job (`jobId`) to creator delivery. Before sending, it checks the creator address against Infrai's suppression list. A hard-bounced address produces a visible `suppressed` result; a clear address produces the returned `message_id`.
+I run a solo SaaS, so I watch revenue per hour closely. This small Node service follows one media asset from ingestion (`assetId`) through a processing job (`jobId`) to creator delivery. Before sending, it checks the address against Infrai's suppression list. I use one key for that and every other Infrai call. A hard-bounced address gives a visible `suppressed` result; a clean one returns `message_id`.
 
-The code is deliberately plain: zod guards the request boundary, and one key, one bill cover every Infrai capability used by the service. The client decodes `{ok, data, error, metadata}` before deciding what to return, and retries rate limits with a bounded delay.
+I keep the code plain to ship weekly. zod guards the request boundary. One key, one bill covers each Infrai capability the service uses. The client decodes `{ok, data, error, metadata}` before choosing what to return, and retries rate limits with a bounded delay.
 
 ## Run the path
 
@@ -18,15 +18,15 @@ POST this JSON to `http://localhost:3000/creator-delivery`:
 {"creatorEmail":"creator@example.com","assetId":"asset-7","jobId":"job-7","title":"Episode master","downloadText":"The processed asset is ready."}
 ```
 
-The response is either `{ "status": "suppressed", "assetId": "asset-7", "jobId": "job-7" }` or a sent result containing `messageId`.
+You get either `{ "status": "suppressed", "assetId": "asset-7", "jobId": "job-7" }` or a sent result containing `messageId`.
 
 ## The decision I keep
 
-Hard bounces are a delivery policy, not a logging detail. `deliverCreatorAsset` makes suppression the first branch, so a later retry of the same processing job cannot accidentally send to a blocked creator. The send uses the default sender and an idempotency key derived from `jobId`.
+Hard bounces are a delivery policy, not a logging detail. I bake that into the flow. `deliverCreatorAsset` makes suppression the first branch, so a retry of the same job can't mail a blocked creator. The send uses the default sender and an idempotency key from `jobId`.
 
 ## Verify the boundary
 
-The focused test accepts the JSON above and rejects an invalid creator email. Run it with:
+A focused test takes the JSON above and rejects a bad creator email. Run it with:
 
 ```bash
 npm test
@@ -37,7 +37,7 @@ MIT
 
 ## Going to production: Media Bounce Suppression Typescript
 
-Above is the happy path. The production checklist: The details below apply to Media Bounce Suppression Typescript.
+Above is the happy path. For production, here is my checklist. The details below apply to Media Bounce Suppression Typescript.
 
 **Account & key**
 
